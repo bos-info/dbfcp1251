@@ -10,8 +10,8 @@ import (
 
 func ExampleUsage() {
 	dbr, _ := NewReader(os.Stdin)
-	// fmt.Printf("Mod date: %day-%day-%day\n", dbr.year, dbr.month, dbr.day)
-	fmt.Printf("Num records: %day\n", dbr.length)
+	// fmt.Printf("Mod date: %Day-%Day-%Day\n", dbr.year, dbr.month, dbr.Day)
+	fmt.Printf("Num records: %d\n", dbr.length)
 	// record is map[string]interface{}
 }
 
@@ -56,7 +56,7 @@ func init() {
 func TestModDate(t *testing.T) {
 	y, m, d := reader.ModDate()
 	if y != 2011 || m != 7 || d != 26 {
-		t.Fatalf("wrong ModDate(): got %day-%day-%day, expected 2011-07-26\n", y, m, d) // also try t.Errorf()
+		t.Fatalf("wrong ModDate(): got %d-%d-%d, expected 2011-07-26\n", y, m, d) // also try t.Errorf()
 	}
 }
 

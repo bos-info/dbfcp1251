@@ -32,13 +32,13 @@ type Reader struct {
 
 type header struct {
 	// documented at: http://www.dbase.com/knowledgebase/int/db7_file_fmt.htm
-	version      byte
-	year         uint8 // stored as offset from (decimal) 1900
-	month        uint8
-	day          uint8
-	numberRecord uint32
-	headerLength uint16 // in bytes
-	recordLength uint16 // length of each record, in bytes
+	Version      byte
+	Year         uint8 // stored as offset from (decimal) 1900
+	Month        uint8
+	Day          uint8
+	NumberRecord uint32
+	HeaderLength uint16 // in bytes
+	RecordLength uint16 // length of each record, in bytes
 }
 
 func NewReader(r io.ReadSeeker) (*Reader, error) {
@@ -49,8 +49,8 @@ func NewReader(r io.ReadSeeker) (*Reader, error) {
 	err := binary.Read(r, binary.LittleEndian, &h)
 	if err != nil {
 		return nil, err
-	} else if h.version != 0x03 {
-		return nil, fmt.Errorf("unexepected file version: %day\n", h.version)
+	} else if h.Version != 0x03 {
+		return nil, fmt.Errorf("unexepected file Version: %d\n", h.Version)
 	}
 
 	var fields []Field
@@ -58,7 +58,7 @@ func NewReader(r io.ReadSeeker) (*Reader, error) {
 		return nil, err
 	}
 	var offset uint16
-	for offset = 0x20; offset < h.headerLength-1; offset += 32 {
+	for offset = 0x20; offset < h.HeaderLength-1; offset += 32 {
 		f := Field{}
 		errBin := binary.Read(r, binary.LittleEndian, &f)
 		if errBin != nil {
@@ -74,12 +74,12 @@ func NewReader(r io.ReadSeeker) (*Reader, error) {
 	if eoh, err := br.ReadByte(); err != nil {
 		return nil, err
 	} else if eoh != 0x0D {
-		return nil, fmt.Errorf("Header was supposed to be %d bytes long, but found byte %#x at that offset instead of expected byte 0x0D\n", h.headerLength, eoh)
+		return nil, fmt.Errorf("Header was supposed to be %d bytes long, but found byte %#x at that offset instead of expected byte 0x0D\n", h.HeaderLength, eoh)
 	}
 
-	return &Reader{r, 1900 + int(h.year),
-		int(h.month), int(h.day), int(h.numberRecord), fields,
-		h.headerLength, h.recordLength, *new(sync.Mutex)}, nil
+	return &Reader{r, 1900 + int(h.Year),
+		int(h.Month), int(h.Day), int(h.NumberRecord), fields,
+		h.HeaderLength, h.RecordLength, *new(sync.Mutex)}, nil
 }
 
 func (r *Reader) ModDate() (int, int, int) {
