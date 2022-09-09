@@ -12,18 +12,21 @@ import (
 	"fmt"
 	"golang.org/x/text/encoding/charmap"
 	"io"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
 )
 
 type Reader struct {
-	rs               io.ReadSeeker
-	year, month, day int
-	length           int // number of records
-	fields           []Field
-	headerLength     uint16 // in bytes
-	recordLength     uint16 // length of each record, in bytes
+	rs           io.ReadSeeker
+	year         int
+	month        int
+	day          int
+	length       int // number of records
+	fields       []Field
+	headerLength uint16 // in bytes
+	recordLength uint16 // length of each record, in bytes
 	sync.Mutex
 }
 
@@ -120,7 +123,9 @@ func (r *Reader) Read(i uint16) (rec Record, err error) {
 	r.Lock()
 	defer r.Unlock()
 	offset := int64(r.headerLength) + int64(r.recordLength)*int64(i)
-	r.rs.Seek(offset, 0)
+	if _, err = r.rs.Seek(offset, 0); err != nil {
+		log.Println("seek error")
+	}
 
 	var deleted byte
 	if err = binary.Read(r.rs, binary.LittleEndian, &deleted); err != nil {
@@ -171,4 +176,8 @@ func (r *Reader) Read(i uint16) (rec Record, err error) {
 		}
 	}
 	return rec, nil
+}
+
+func (r *Reader) Length() int {
+	return r.length
 }
