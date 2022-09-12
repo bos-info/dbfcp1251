@@ -1,10 +1,5 @@
+// Package dbf provides parsing DBF files with cp1251 codepage(Cyrillic) for FoxBASE+/Dbase III plus, no memo
 package dbf
-
-// reference implementation:
-//     http://dbf.berlios.de/
-// test data: http://abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/2923.0.30.0012006?OpenDocument
-// a dbf.Reader should have some metadata, and a Read() method that returns
-// table rows, one at a time
 
 import (
 	"bufio"
@@ -18,6 +13,10 @@ import (
 	"sync"
 )
 
+// A Reader serves content from a DBF file.
+//
+// A dbf.Reader should have some metadata, and a Read() method that returns
+// table rows, one at a time
 type Reader struct {
 	rs           io.ReadSeeker
 	year         int
@@ -31,7 +30,7 @@ type Reader struct {
 }
 
 type header struct {
-	// documented at: http://www.dbase.com/knowledgebase/int/db7_file_fmt.htm
+	// documented at: https://en.wikipedia.org/wiki/.dbf
 	Version      byte
 	Year         uint8 // stored as offset from (decimal) 1900
 	Month        uint8
@@ -41,6 +40,7 @@ type header struct {
 	RecordLength uint16 // length of each record, in bytes
 }
 
+// NewReader returns a new Reader reading from r.
 func NewReader(r io.ReadSeeker) (*Reader, error) {
 	var h header
 	if _, err := r.Seek(0, 0); err != nil {
@@ -82,14 +82,17 @@ func NewReader(r io.ReadSeeker) (*Reader, error) {
 		h.HeaderLength, h.RecordLength, *new(sync.Mutex)}, nil
 }
 
+// ModDate return year, month and day of modification file
 func (r *Reader) ModDate() (int, int, int) {
 	return r.year, r.month, r.day
 }
 
+// FieldName return name of ordinal number of the column
 func (r *Reader) FieldName(i int) (name string) {
 	return strings.TrimRight(string(r.fields[i].Name[:]), "\x00")
 }
 
+// FieldNames return names of all columns
 func (r *Reader) FieldNames() (names []string) {
 	for i := range r.fields {
 		names = append(names, r.FieldName(i))
@@ -119,6 +122,7 @@ type Field struct {
 
 type Record map[string]interface{}
 
+// Read implements the Reader interface only for C,N,F types of record in a file
 func (r *Reader) Read(i uint16) (rec Record, err error) {
 	r.Lock()
 	defer r.Unlock()
@@ -178,6 +182,7 @@ func (r *Reader) Read(i uint16) (rec Record, err error) {
 	return rec, nil
 }
 
+// Length return a number of records in file
 func (r *Reader) Length() int {
 	return r.length
 }
