@@ -79,7 +79,7 @@ func TestFieldTypes(t *testing.T) {
 	})
 
 	_, err := NewReader(badFieldType)
-	expectedErr := "Sorry, dbf library doesn't recognize field type 'B'"
+	expectedErr := "sorry, dbf library doesn't recognize field type 'B'"
 	if err.Error() != expectedErr {
 		t.Fatalf("Expected error: %s\nbut got: %s", expectedErr, err)
 	}
