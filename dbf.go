@@ -26,7 +26,7 @@ type Reader struct {
 	fields       []Field
 	headerLength uint16 // in bytes
 	recordLength uint16 // length of each record, in bytes
-	sync.Mutex
+	mu           sync.Mutex
 }
 
 type header struct {
@@ -77,9 +77,9 @@ func NewReader(r io.ReadSeeker) (*Reader, error) {
 		return nil, fmt.Errorf("Header was supposed to be %d bytes long, but found byte %#x at that offset instead of expected byte 0x0D\n", h.HeaderLength, eoh)
 	}
 
-	return &Reader{r, 1900 + int(h.Year),
-		int(h.Month), int(h.Day), int(h.NumberRecord), fields,
-		h.HeaderLength, h.RecordLength, *new(sync.Mutex)}, nil
+	return &Reader{rs: r, year: 1900 + int(h.Year),
+		month: int(h.Month), day: int(h.Day), length: int(h.NumberRecord), fields: fields,
+		headerLength: h.HeaderLength, recordLength: h.RecordLength}, nil
 }
 
 // ModDate return year, month and day of modification file
@@ -124,8 +124,8 @@ type Record map[string]interface{}
 
 // Read implements the Reader interface only for C,N,F types of record in a file
 func (r *Reader) Read(i uint16) (rec Record, err error) {
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	offset := int64(r.headerLength) + int64(r.recordLength)*int64(i)
 	if _, err = r.rs.Seek(offset, 0); err != nil {
 		log.Println("seek error")
